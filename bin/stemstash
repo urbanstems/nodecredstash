@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+
+const command = process.argv[2];
+
+switch (command) {
+  case 'import':
+    require('./import'); // eslint-disable-line global-require
+    break;
+  default:
+    console.log(`Command ${command} is not recognized.`); // eslint-disable-line no-console
+}

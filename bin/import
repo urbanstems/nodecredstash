@@ -1,0 +1,108 @@
+#!/usr/bin/env node
+
+/**
+ * Module Dependencies
+ */
+const fs = require('fs');
+const argv = require('yargs').argv;
+const { spawn } = require('child_process');
+
+
+/**
+ * A helper for lazily logging messages.
+ *
+ * @param  {string} message
+ * @return {funciton}
+ */
+function debug(message) {
+  return (value) => {
+    console.log('[node credstash]', message); // eslint-disable-line no-console
+    return value;
+  };
+}
+
+/**
+ * Asynchronously read a file.
+ *
+ * @param  {string} file
+ * @return {Promise<Buffer>}
+ */
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(file, (err, text) => { // eslint-disable-line
+      return err ? reject(err) : resolve(text);
+    });
+  });
+}
+
+/**
+ * Convert a buffer to uft-8
+ *
+ * @param  {Buffer} buffer
+ * @return {string}
+ */
+function decodeBuffer(buffer) {
+  return buffer.toString('utf8');
+}
+
+/**
+ * Parse a JSON string.
+ *
+ * @param  {string} json
+ * @return {any}
+ */
+function parseJSON(json) {
+  return JSON.parse(json);
+}
+
+/**
+ * Run a terminal command as a Promise, piping all stdio to
+ * the parent process.
+ *
+ * @param  {string} command
+ * @return {Promise<void>}
+ */
+function cmd(exec, ...args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(exec, args, { stdio: 'inherit' });
+    child.on('close', resolve);
+    child.on('error', reject);
+  });
+}
+
+/**
+ * Put many secrets to the credstash api.
+ *
+ * @param  {object} secrets
+ * @return {Promise<void>}
+ */
+function putSecrets(secrets) {
+  return Object
+    .keys(secrets)
+    .reduce((promise, key) =>
+      promise.then(() =>
+        cmd('./put-secret', key, secrets[key], argv.p, argv.e))
+    , Promise.resolve());
+}
+
+/**
+ * The final handler.
+ */
+function handleError(error) {
+  debug('[node credstash] An error occurred while importing your secrets')();
+  debug(error.stack)();
+
+  process.exit(1);
+}
+
+
+// Main //
+// ---- //
+
+readFile(argv.f)
+  .then(decodeBuffer)
+  .then(parseJSON)
+  .then(debug('Starting credstash api calls.'))
+  .then(putSecrets)
+  .then(debug('Secrets imported successfully.'))
+  .catch(handleError);
