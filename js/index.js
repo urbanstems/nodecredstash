@@ -259,6 +259,7 @@ module.exports = function (mainConfig) {
       const options = Object.assign({}, opts);
       const version = options.version;
       const context = options.context;
+      const filterString = `:${context.project}:${context.env}`;
 
       const unOrdered = {};
       return this.listSecrets()
@@ -266,6 +267,7 @@ module.exports = function (mainConfig) {
           const position = {};
           const filtered = [];
           secrets
+            .filter(secret => secret.name.endsWith(filterString))
             .filter(secret => secret.version == (version || secret.version))
             .forEach((next) => {
               position[next.name] = position[next.name] ?
