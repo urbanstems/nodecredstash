@@ -3,6 +3,9 @@
   "version": "1.0.1",
   "description": "Node.js credstash implementation",
   "main": "js/index.js",
+  "bin": {
+    "stemstash": "bin/stemstash"
+  },
   "engines": {
     "node": ">=4.2.3",
     "npm": ">=2.14.7"
@@ -45,6 +48,7 @@
   "dependencies": {
     "aes-js": "^3.1.0",
     "aws-sdk": "^2.48.0",
-    "debug": "^2.6.6"
+    "debug": "^2.6.6",
+    "yargs": "^8.0.2"
   }
 }
