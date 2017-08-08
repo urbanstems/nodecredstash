@@ -259,6 +259,43 @@ module.exports = function (mainConfig) {
       const options = Object.assign({}, opts);
       const version = options.version;
       const context = options.context;
+
+      const unOrdered = {};
+      return this.listSecrets()
+        .then((secrets) => {
+          const position = {};
+          const filtered = [];
+          secrets
+            .filter(secret => secret.version == (version || secret.version))
+            .forEach((next) => {
+              position[next.name] = position[next.name] ?
+                position[next.name] : filtered.push(next);
+            });
+
+          return filtered;
+        })
+        .then(secrets =>
+          utils.mapPromise(secrets, secret =>
+            this.getSecret({ name: secret.name, version: secret.version, context })
+              .then((plainText) => {
+                unOrdered[secret.name] = plainText;
+              })
+              .catch(() => undefined) // eslint-disable-line comma-dangle
+          ) // eslint-disable-line comma-dangle
+        )
+        .then(() => {
+          const ordered = {};
+          Object.keys(unOrdered).sort().forEach((key) => {
+            ordered[key] = unOrdered[key];
+          });
+          return ordered;
+        });
+    }
+
+    getAllSecretsFiltered(opts) {
+      const options = Object.assign({}, opts);
+      const version = options.version;
+      const context = options.context;
       const filterString = `:${context.project}:${context.env}`;
 
       const unOrdered = {};
